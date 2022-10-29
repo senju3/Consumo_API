@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API</title>
+</head>
+<body>
+    <hr>
+    <h1>Lista de games:</h1>
+    <ul id="games"></ul>
+    <br>
+    <hr>
+    <br>
+    <input type="text" name="name" id="name" placeholder="Nome do jogo"><br>
+    <input type="number" name="price" id="price" placeholder="Preço"><br>
+    <button onclick="createGame()">CRIAR</button>
+    <br>
+    <hr>
+    <br>
+    <input type="number" name="idEdit" id="idEdit" readonly><br>
+    <input type="text" name="nameEdit" id="nameEdit"><br>
+    <input type="number" name="priceEdit" id="priceEdit"><br>
+    <button onclick="editGame()">EDITAR</button>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/axios@1.1.2/dist/axios.min.js"></script>
+<script>
+    const list = document.querySelector("#games");
+    
+    //Publicando novo jogo
+    function createGame(){
+        const name = document.querySelector("#name");
+        const price = document.querySelector("#price");
+
+        const game = {
+            name: name.value,
+            price: price.value
+        }
+
+        axios.post("http://localhost:8080/game", game).then(response => {
+            if(response.status == 200){
+                alert("Jogo cadastrado")
+            }
+        }).catch(err => console.log(err))
+       
+    }
+
+    function loadForm(item){
+
+        const id = item.getAttribute("data-id");
+        const name = item.getAttribute("data-name");
+        const price = item.getAttribute("data-price");
+
+        document.querySelector("#idEdit").value = id;
+        document.querySelector("#nameEdit").value = name;
+        document.querySelector("#priceEdit").value = price;
+
+    };
+    function editGame (){
+        const idInput = document.querySelector("#idEdit");
+        const name = document.querySelector("#nameEdit");
+        const price = document.querySelector("#priceEdit");
+
+        const game = {
+            name: name.value,
+            price: price.value
+        }
+
+        const id = idInput.value;
+        axios.put("http://localhost:8080/game/"+id, game).then(response => {
+            if(response.status == 200){
+                alert("Jogo atualizado!")
+            }
+        }).catch(err => console.log(err))
+    }
+    function deleteItem(item){
+        const id = item.getAttribute("data-id");
+        axios.delete("http://localhost:8080/game/"+id).then(response => {
+            if(response.status == 200){
+                alert("Jogo deletado")
+            }
+        }).catch(err => console.log(err));
+    };
+    //fazendo um requisição da lista de jogos existentes no banco de dados
+    axios.get("http://localhost:8080/games").then(response => {
+        const games = response.data;
+        
+        games.forEach(game => {
+            const item = document.createElement("li");
+
+            item.setAttribute("data-id", game.id)
+            item.setAttribute("data-name", game.name)
+            item.setAttribute("data-price", game.price)
+
+            item.innerHTML = game.name + " - " + "$ " + game.price
+            list.appendChild(item)
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.innerHTML = "Deletar"
+            item.appendChild(deleteBtn)
+            deleteBtn.addEventListener("click", () => deleteItem(item))
+
+            const editBtn = document.createElement("button");
+            editBtn.innerHTML = "Editar"
+            item.appendChild(editBtn)
+            editBtn.addEventListener("click", () => loadForm(item))
+        });
+    }).catch(err => {
+        console.log(err)
+    })
+</script>
+</html>
